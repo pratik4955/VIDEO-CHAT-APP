@@ -4,15 +4,39 @@ const { v4: uuidv4 } = require("uuid");
 const cors = require("cors");
 const twilio = require("twilio");
 const { disconnect } = require("process");
-
+const path=require("path");
 const PORT = process.env.PORT || 5002;
 const app = express();
 const server = http.createServer(app);
+require('dotenv').config();
 
 app.use(cors());
 
 let connectedUsers = [];
 let rooms = [];
+
+const __dirname1 = path.resolve();
+if (process.env.NODE_ENV === "production") {
+  const buildPath = path.join(__dirname1, "..", "my-app", "build"); // Adjust the path to go one level up
+  console.log("Serving static files from:", buildPath); // Log the build path
+
+  app.use(express.static(buildPath));
+
+  app.get("*", (req, res) => {
+    console.log("Received request for:", req.originalUrl); // Log incoming requests
+    res.sendFile(path.resolve(buildPath, "index.html"), (err) => {
+      if (err) {
+        console.error("Error serving index.html:", err); // Log any errors when serving index.html
+        res.status(err.status).end();
+      }
+    });
+  });
+} else {
+  app.get("/", (req, res) => {
+    res.send("API is running..");
+  });
+}
+
 
 // create route to check if room exists
 app.get("/api/room-exists/:roomId", (req, res) => {
